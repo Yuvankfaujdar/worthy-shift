@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Worth The Shift?</title>
+<meta name="description" content="Put any price in hours at your desk. Find out how long you'd sit in that office for AirPods, a car or one more Swiggy order.">
+<meta name="theme-color" content="#E4ECE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131A18" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Worth The Shift?">
+<meta property="og:description" content="How many hours at your desk does that iPhone really cost? Your salary never leaves your phone.">
+<meta property="og:type" content="website">
+<!-- LinkedIn needs a full URL here: replace with https://YOUR-DOMAIN/assets/icons/og.png once it is live -->
+<meta property="og:image" content="/assets/icons/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worth It?">
+<link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="bar gutter">
+  <div class="col">
+    <p class="brand">Worth the <em>shift?</em></p>
+    <div class="bar-right">
+      <button class="pill" id="demoPill" type="button" hidden>Demo pay</button>
+      <button class="icon-btn" id="gear" type="button" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="gutter">
+  <div class="col">
+    <!-- empty state -->
+    <section class="card" id="emptyHero" hidden>
+      <div class="card-head"><span>Timecard · today</span><span>No damage yet</span></div>
+      <div class="empty-hero">
+        <h2>Go on. <em>Tempt</em> yourself.</h2>
+        <p>Type something you want down there. We'll tell you how many hours of your one precious life it costs.</p>
+      </div>
+    </section>
+
+    <!-- latest verdict -->
+    <section class="card verdict" id="verdict" aria-live="polite" hidden>
+      <div class="card-head"><span>Timecard · <span id="vWhen"></span></span><button class="share-btn" id="shareBtn" type="button" aria-pressed="false">Screenshot mode</button></div>
+      <div class="verdict-body">
+        <p class="q">To afford <b id="vItem"></b><span id="vAt"> at <b id="vPrice"></b></span>, you'd sit in that office for</p>
+        <div class="stamp" id="stamp"><span class="big" id="vBig"></span><span class="unit" id="vUnit">of your actual life</span></div>
+        <p class="line" id="vLine"></p>
+        <div>
+          <div class="days" id="days" aria-hidden="true"></div>
+          <p class="cap" id="daysCap"></p>
+        </div>
+        <div class="facts" id="facts"></div>
+        <p class="cap" id="basis"></p>
+        <p class="share-note" id="shareNote" hidden>Price and math hidden, so nobody can work backwards to your salary. Screenshot away.</p>
+      </div>
+    </section>
+
+    <!-- history -->
+    <section class="card" id="ledgerCard" hidden>
+      <div class="card-head"><span>Things you've weighed</span><span id="ledgerTotal"></span></div>
+      <ul class="ledger" id="ledger"></ul>
+    </section>
+  </div>
+</main>
+
+<!-- composer -->
+<div class="dock gutter">
+  <div class="col">
+    <div class="chips" id="chips" aria-label="Quick picks"></div>
+    <form class="sentence" id="composer" autocomplete="off">
+      <span>I want</span>
+      <input id="item" type="text" placeholder="iPhone 18" aria-label="What you want">
+      <span class="for">for</span>
+      <input id="price" type="text" inputmode="decimal" placeholder="₹99,900" aria-label="Price">
+      <button class="go" type="submit" aria-label="Stamp it">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </form>
+    <p class="err" id="composerErr" role="alert"></p>
+  </div>
+</div>
+
+<!-- onboarding / settings sheet -->
+<div class="scrim" id="scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-top">
+      <h2 id="sheetTitle">Clock in. <em>Once.</em></h2>
+      <button class="close" id="closeSheet" type="button">Close</button>
+    </div>
+    <p class="sub" id="sheetSub">Tell us what you make. We'll hide it and never bring it up again. Unlike your manager.</p>
+
+    <div id="maskedRow" class="row masked-row" hidden>
+      <div><div class="mask" aria-label="Salary hidden">••••••</div><p class="hint" id="maskedMeta"></p></div>
+      <button class="btn text" id="changePay" type="button">Change salary</button>
+    </div>
+
+    <label for="salary" id="salaryLabel">In-hand salary (we won't look)
+      <input class="field" id="salary" type="password" inputmode="text" autocomplete="off" placeholder="e.g. 1,00,000 or 1L">
+    </label>
+    <div class="seg" role="group" aria-label="Salary period">
+      <button type="button" id="perMonth" aria-pressed="true">Per month</button>
+      <button type="button" id="perYear" aria-pressed="false">Per year</button>
+    </div>
+    <div class="grid">
+      <label for="hpd">Hours a day you're "working"
+        <input class="field" id="hpd" type="number" min="1" max="24" step="0.5" value="9">
+      </label>
+      <label for="dpw">Days a week
+        <input class="field" id="dpw" type="number" min="1" max="7" step="0.5" value="5">
+      </label>
+    </div>
+    <label for="currency">Currency
+      <select class="field" id="currency">
+        <option value="INR">₹ INR</option><option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option><option value="AED">AED</option>
+      </select>
+    </label>
+    <p class="hint err" id="setupErr" role="alert"></p>
+    <div class="actions">
+      <button class="btn" id="saveBtn" type="button">Punch in</button>
+      <button class="btn text" id="demoBtn" type="button">Just looking. Use demo pay.</button>
+    </div>
+    <p class="hint">Your salary stays in this browser and is never shown again. Use what lands in your account, not CTC, for the painful truth.</p>
+
+    <div id="dangerZone" hidden>
+      <hr class="sep">
+      <div class="row danger-row">
+        <button class="btn danger" id="clearHist" type="button">Clear history</button>
+        <button class="btn danger" id="forget" type="button">Forget my salary</button>
+      </div>
+      <p class="hint err confirm-msg" id="confirmMsg" role="status"></p>
+    </div>
+  </div>
+</div>
+<script src="/assets/app.js" defer></script>
+</body>
+</html>
