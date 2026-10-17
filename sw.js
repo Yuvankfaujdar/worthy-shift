@@ -1,8 +1,8 @@
 // Offline support: cache the app shell, serve it when the network is unavailable.
 // Bump VERSION on every deploy so phones pick up the new files.
-const VERSION = "ws-v2";
+const VERSION = "ws-v3";
 const SHELL = [
-  "/", "/index.html", "/assets/styles.css", "/assets/app.js", "/manifest.webmanifest",
+  "/", "/index.html", "/assets/styles.css", "/assets/app.js", "/assets/analytics.js", "/assets/vendor/mixpanel-2.84.0.min.js", "/manifest.webmanifest",
   "/assets/icons/icon.svg", "/assets/icons/icon-192.png",
   "/assets/fonts/bricolage-grotesque-latin-500-normal.woff2",
   "/assets/fonts/bricolage-grotesque-latin-800-normal.woff2",

@@ -108,13 +108,14 @@
     $("chips").innerHTML = "";
     (PICKS[state.currency]||PICKS.INR).forEach(([n,p])=>{
       const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=n;
-      b.onclick=()=>{ $("item").value=n; $("price").value=p.toLocaleString(state.currency==="INR"?"en-IN":"en-US"); submit(); };
+      b.onclick=()=>{ $("item").value=n; $("price").value=p.toLocaleString(state.currency==="INR"?"en-IN":"en-US"); submit("quick_pick"); };
       $("chips").appendChild(b);
     });
   }
 
   /* ---------- composer ---------- */
-  function submit(){
+  let sessionChecks = 0;
+  function submit(source){
     const name = $("item").value.trim() || "that thing";
     const price = parseAmount($("price").value);
     if (!(price > 0)){ $("composerErr").textContent="Need a price, boss. Try 99,900 or 1L."; $("price").focus(); return; }
@@ -123,11 +124,13 @@
     state.history.unshift({ name, price, cur: state.currency, t: Date.now(), seed: Math.floor(Math.random()*1000) });
     state.history = state.history.slice(0, 30);
     save(); render(true);
+    sessionChecks++;
+    wsTrack("Price Checked", { source: source || "typed", demo_pay: !state.pay, checks_this_visit: sessionChecks, total_checks: state.history.filter(x=>!x.ex).length });
     $("item").value=""; $("price").value="";
     window.scrollTo({top:0,behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth"});
   }
-  $("shareBtn").onclick=()=>{ state.share=!state.share; save(); render(false); };
-  $("composer").addEventListener("submit", e=>{ e.preventDefault(); submit(); });
+  $("shareBtn").onclick=()=>{ state.share=!state.share; save(); render(false); wsTrack("Screenshot Mode Toggled", { on: state.share }); };
+  $("composer").addEventListener("submit", e=>{ e.preventDefault(); submit("typed"); });
 
   /* ---------- sheet ---------- */
   let draftPeriod = state.period, editingPay = false;
@@ -145,6 +148,7 @@
     delete $("saveBtn").dataset.confirm;
     syncPay(); syncSeg();
     $("scrim").hidden = false;
+    if(!first) wsTrack("Settings Opened");
     setTimeout(()=> (editingPay ? $("salary") : $("hpd")).focus(), 50);
   }
   function closeSheet(){ if(!state.pay && !state.demo) return; $("scrim").hidden = true; $("gear").focus(); }
@@ -179,15 +183,19 @@
       $("setupErr").textContent = testRate<20 ? "That's under ₹20 an hour. Did you mean per year, or drop a few zeros?" : "That's over ₹50,000 an hour. Yearly pay entered as monthly? Check the toggle, or confirm.";
       return;
     }
+    const wasOnboarding = !state.pay;
     Object.assign(state,{ pay, period:draftPeriod, hpd, dpw, currency:cur, demo:false });
+    if(wasOnboarding) wsTrack("Onboarding Completed", { pay_period: draftPeriod, currency: cur });
+    else wsTrack("Settings Saved", { changed_salary: editingPay });
     $("salary").value=""; save();
     $("scrim").hidden = true; render(true);
   };
-  $("demoBtn").onclick=()=>{ state.demo=true; state.currency=$("currency").value; save(); $("scrim").hidden=true; render(false); };
-  $("clearHist").onclick=()=>{ state.history=[]; save(); render(false); $("confirmMsg").textContent="History cleared. Clean slate, same job."; };
+  $("demoBtn").onclick=()=>{ wsTrack("Demo Mode Started"); state.demo=true; state.currency=$("currency").value; save(); $("scrim").hidden=true; render(false); };
+  $("clearHist").onclick=()=>{ wsTrack("History Cleared"); state.history=[]; save(); render(false); $("confirmMsg").textContent="History cleared. Clean slate, same job."; };
   $("forget").onclick=()=>{
     if(!$("forget").dataset.armed){ $("forget").dataset.armed="1"; $("forget").textContent="Tap again to forget"; return; }
     delete $("forget").dataset.armed; $("forget").textContent="Forget my salary";
+    wsTrack("Salary Forgotten");
     state.pay=null; state.demo=false; save(); render(false); openSheet();
   };
 
@@ -197,6 +205,17 @@
     state.history=[{ name:"iPhone 18", price:99900, cur:"INR", t:Date.now(), seed:1, ex:true }];
   }
   render(false);
+  (function(){
+    let source = "direct";
+    try{
+      const u = new URLSearchParams(location.search).get("utm_source");
+      if(u) source = u.slice(0,40);
+      else if(document.referrer){ const h = new URL(document.referrer).hostname.replace(/^www\./,""); if(h !== location.hostname) source = h; }
+    }catch(e){}
+    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    wsTrack("App Opened", { source, installed_app: standalone, visitor: state.pay ? "set_up" : state.demo ? "demo" : "new" });
+  })();
+  window.addEventListener("appinstalled", ()=> wsTrack("App Installed"));
   if(!state.pay && !state.demo) openSheet();
   setInterval(()=>render(false), 60000);
 })();
