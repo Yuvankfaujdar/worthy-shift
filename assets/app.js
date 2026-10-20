@@ -141,10 +141,13 @@
     save(); render(true);
     sessionChecks++;
     wsTrack("Price Checked", { source: source || "typed", demo_pay: !state.pay, checks_this_visit: sessionChecks, total_checks: state.history.filter(x=>!x.ex).length });
+    wsUser.add({ "Price Checks": 1 });
+    wsUser.setOnce({ "First Check": new Date().toISOString() });
+    wsUser.set({ "Last Check": new Date().toISOString(), "Visitor Type": state.pay ? "set_up" : "sample_pay" });
     $("item").value=""; $("price").value="";
     window.scrollTo({top:0,behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth"});
   }
-  $("shareBtn").onclick=()=>{ state.share=!state.share; save(); render(false); wsTrack("Screenshot Mode Toggled", { on: state.share }); };
+  $("shareBtn").onclick=()=>{ state.share=!state.share; save(); render(false); wsTrack("Screenshot Mode Toggled", { on: state.share }); if(state.share) wsUser.set({ "Used Screenshot Mode": true }); };
   $("composer").addEventListener("submit", e=>{ e.preventDefault(); submit("typed"); });
 
   /* ---------- sheet ---------- */
@@ -200,19 +203,22 @@
     }
     const wasOnboarding = !state.pay;
     Object.assign(state,{ pay, period:draftPeriod, hpd, dpw, currency:cur });
-    if(wasOnboarding) wsTrack("Onboarding Completed", { pay_period: draftPeriod, currency: cur, checks_before: state.history.filter(x=>!x.ex).length });
-    else wsTrack("Settings Saved", { changed_salary: editingPay });
+    if(wasOnboarding){
+      wsTrack("Onboarding Completed", { pay_period: draftPeriod, currency: cur, checks_before: state.history.filter(x=>!x.ex).length });
+      wsUser.setOnce({ "Onboarded At": new Date().toISOString() });
+    } else wsTrack("Settings Saved", { changed_salary: editingPay });
+    wsUser.set({ "Has Salary": true, "Visitor Type": "set_up", "Pay Period": draftPeriod, "Currency": cur });
     $("salary").value=""; save();
     $("scrim").hidden = true; render(true);
   };
   $("demoBtn").onclick=()=>{ wsTrack("Salary Prompt Dismissed", { from: "sheet" }); closeSheet(); };
   $("nudgeYes").onclick=()=>{ wsTrack("Salary Prompt Accepted"); openSheet(); };
-  $("nudgeNo").onclick=()=>{ wsTrack("Salary Prompt Dismissed", { from: "nudge" }); state.nudgeOff=true; save(); render(false); };
+  $("nudgeNo").onclick=()=>{ wsTrack("Salary Prompt Dismissed", { from: "nudge" }); wsUser.set({ "Dismissed Salary Prompt": true }); state.nudgeOff=true; save(); render(false); };
   $("clearHist").onclick=()=>{ wsTrack("History Cleared"); state.history=[]; save(); render(false); $("confirmMsg").textContent="History cleared. Clean slate, same job."; };
   $("forget").onclick=()=>{
     if(!$("forget").dataset.armed){ $("forget").dataset.armed="1"; $("forget").textContent="Tap again to forget"; return; }
     delete $("forget").dataset.armed; $("forget").textContent="Forget my salary";
-    wsTrack("Salary Forgotten");
+    wsTrack("Salary Forgotten"); wsUser.set({ "Has Salary": false, "Visitor Type": "sample_pay" });
     state.pay=null; state.nudgeOff=true; save(); render(false); closeSheet();
   };
 
@@ -230,9 +236,14 @@
       else if(document.referrer){ const h = new URL(document.referrer).hostname.replace(/^www\./,""); if(h !== location.hostname) source = h; }
     }catch(e){}
     const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-    wsTrack("App Opened", { source, installed_app: standalone, visitor: state.pay ? "set_up" : hasRealChecks() ? "sample_pay" : "new" });
+    const visitor = state.pay ? "set_up" : hasRealChecks() ? "sample_pay" : "new";
+    wsTrack("App Opened", { source, installed_app: standalone, visitor });
+    const now = new Date().toISOString();
+    wsUser.setOnce({ "First Seen": now, "First Source": source });
+    wsUser.set({ "Last Seen": now, "Last Source": source, "Visitor Type": visitor, "Has Salary": !!state.pay, "Currency": state.currency, "Uses Installed App": standalone });
+    wsUser.add({ "Visits": 1 });
   })();
-  window.addEventListener("appinstalled", ()=> wsTrack("App Installed"));
+  window.addEventListener("appinstalled", ()=>{ wsTrack("App Installed"); wsUser.set({ "Installed App": true }); });
   setInterval(()=>render(false), 60000);
 })();
 

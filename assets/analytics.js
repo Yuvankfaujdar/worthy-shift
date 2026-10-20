@@ -5,8 +5,9 @@
   var host = location.hostname;
   var off = location.protocol === "file:" || host === "localhost" || host === "127.0.0.1" || host === "";
 
-  // Local no-op so the app never breaks if analytics is off or blocked.
+  // Local no-ops so the app never breaks if analytics is off or blocked.
   window.wsTrack = function () {};
+  window.wsUser = { set: function () {}, setOnce: function () {}, add: function () {} };
   if (off) return;
 
   window.MIXPANEL_CUSTOM_LIB_URL = "/assets/vendor/mixpanel-2.84.0.min.js";
@@ -23,7 +24,27 @@
     ignore_dnt: false
   });
 
+  // One anonymous user per device: a random ID with no link to name, email, phone or salary.
+  var uid = null;
+  try {
+    uid = localStorage.getItem("ws-uid");
+    if (!uid) {
+      uid = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+      localStorage.setItem("ws-uid", uid);
+    }
+  } catch (e) {}
+  if (uid) {
+    window.mixpanel.identify(uid);
+    window.mixpanel.people.set_once({ "$name": "Visitor " + uid.slice(0, 6).toUpperCase() });
+  }
+
   window.wsTrack = function (name, props) {
     try { window.mixpanel.track(name, props || {}); } catch (e) {}
+  };
+  // Profile properties: counts and yes/no flags only. Never amounts, prices or items.
+  window.wsUser = {
+    set: function (p) { try { if (uid) window.mixpanel.people.set(p); } catch (e) {} },
+    setOnce: function (p) { try { if (uid) window.mixpanel.people.set_once(p); } catch (e) {} },
+    add: function (p) { try { if (uid) window.mixpanel.people.increment(p); } catch (e) {} }
   };
 })();

@@ -7,7 +7,7 @@ Enter your in-hand salary once, then type anything you're tempted to buy. The ap
 ## Privacy
 
 - **Your salary never leaves your device.** It's stored only in your browser's local storage. There is no server, no database and no cookies.
-- **Anonymous usage counts only** (Mixpanel, US region): visits, onboarding completed, number of checks, and a few button taps. Never salary, hourly rate, prices, hours or item names. Session replay, autocapture and IP storage are off, and Do Not Track is respected. See `assets/analytics.js`.
+- **Anonymous usage counts only** (Mixpanel, US region): visits, onboarding completed, number of checks, and a few button taps. Never salary, hourly rate, prices, hours or item names. Session replay, autocapture and IP storage are off, and Do Not Track is respected. Each device gets a random anonymous ID so visits group into one user profile (visits, number of checks, has-salary yes/no); there is no login and no name, email or phone. See `assets/analytics.js`.
 - No third-party scripts or fonts. Everything, including the Mixpanel library, is served from this site.
 - "Forget my salary" in Settings wipes it from the device.
 - **Screenshot mode** hides the price and the math. Price + hours is enough to work out someone's salary, so use it before sharing a screenshot.
