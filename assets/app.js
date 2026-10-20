@@ -5,7 +5,7 @@
     get(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } },
     set(v){ try{ localStorage.setItem(KEY, JSON.stringify(v)); }catch(e){} }
   };
-  let state = Object.assign({ share:false, pay:null, demo:false, period:"month", currency:"INR", hpd:9, dpw:5, history:[] }, store.get());
+  let state = Object.assign({ share:false, nudgeOff:false, pay:null, period:"month", currency:"INR", hpd:9, dpw:5, history:[] }, store.get());
   const save = () => store.set(state);
   const DEMO_PAY = { INR:100000, USD:6000, EUR:5000, GBP:4500, AED:20000 };
 
@@ -56,9 +56,23 @@
   const ago = t => { const s=(Date.now()-t)/1000; if(s<60) return "just now"; if(s<3600) return Math.floor(s/60)+" min ago"; if(s<86400) return Math.floor(s/3600)+"h ago"; return Math.floor(s/86400)+"d ago"; };
 
   /* ---------- render ---------- */
+  const hasRealChecks = () => state.history.some(x=>!x.ex);
+  let nudgeTracked = false;
   function render(animate){
     const c = cfg();
-    $("demoPill").hidden = !!state.pay;
+    const fresh = !state.pay && !hasRealChecks();
+    $("intro").hidden = !fresh;
+    $("demoPill").hidden = !!state.pay || fresh;
+    const nudgeOn = !state.pay && !fresh && !state.nudgeOff;
+    $("nudge").hidden = !nudgeOn;
+    if(nudgeOn){
+      $("nudgeBasis").textContent = `That's on a ${money(DEMO_PAY[state.currency]||100000, state.currency)}/month sample salary.`;
+      if(!nudgeTracked){ nudgeTracked = true; wsTrack("Salary Prompt Shown"); }
+    }
+    if(fresh){
+      const [, ip] = (PICKS[state.currency]||PICKS.INR)[0];
+      $("introTitle").innerHTML = `${money(ip, state.currency)} = <em>${fmtHours(ip/hourly(c)).big.replace(/h$/," hours")}</em> at your desk.`;
+    }
     $("price").placeholder = (SYM[state.currency]||"") + ((PICKS[state.currency]||PICKS.INR)[0][1]).toLocaleString(state.currency==="INR"?"en-IN":"en-US");
     renderChips();
     const hist = state.history.filter(e=>e.cur===state.currency);
@@ -73,6 +87,7 @@
     $("vAt").hidden = state.share; $("basis").hidden = state.share; $("shareNote").hidden = !state.share;
     $("shareBtn").setAttribute("aria-pressed", state.share); $("shareBtn").textContent = state.share ? "Show price" : "Screenshot mode";
     $("vWhen").textContent = e.ex ? "example" : ago(e.t);
+    $("shareBtn").hidden = !!e.ex;
     $("vBig").textContent = f.big; $("vUnit").textContent = f.unit;
     $("vLine").textContent = verdict(h, c, e.seed||0);
     const st=$("stamp"); if(animate){ st.classList.remove("hit"); void st.offsetWidth; st.classList.add("hit"); }
@@ -90,7 +105,7 @@
       <div class="fact"><span class="n">${days.toFixed(days<10?1:0)}</span><span class="l">workdays</span></div>
       <div class="fact"><span class="n">${Number(h.toFixed(h<10?1:0)).toLocaleString("en-IN")}</span><span class="l">hour-long meetings</span></div>
       <div class="fact"><span class="n">${Math.round(h*5).toLocaleString("en-IN")}</span><span class="l">coffee breaks to "think"</span></div>`;
-    $("basis").textContent = `${money(e.price,e.cur)} ÷ your hourly rate. Your month counts as ${Math.round(c.hpd*c.dpw*52/12)} work hours (${c.hpd}h × ${c.dpw} days × 4.33 weeks).${state.pay?"":" Using demo pay until you set yours."}`;
+    $("basis").textContent = `${money(e.price,e.cur)} ÷ your hourly rate. Your month counts as ${Math.round(c.hpd*c.dpw*52/12)} work hours (${c.hpd}h × ${c.dpw} days × 4.33 weeks).${state.pay?"":" Using a sample salary of "+money(c.pay,c.currency)+"/month until you set yours."}`;
 
     const ul=$("ledger"); ul.innerHTML=""; let total=0;
     hist.slice(1).forEach(x=>{
@@ -135,23 +150,23 @@
   /* ---------- sheet ---------- */
   let draftPeriod = state.period, editingPay = false;
   function openSheet(){
-    const first = !state.pay && !state.demo;
+    const first = !state.pay;
     draftPeriod = state.period; editingPay = !state.pay;
-    $("sheetTitle").innerHTML = first ? "Clock in. <em>Once.</em>" : "Settings";
-    $("sheetSub").textContent = first ? "Tell us what you make. We'll hide it and never bring it up again. Unlike your manager." : "Tweak your hours or pay. Your salary stays hidden.";
-    $("closeSheet").hidden = first;
+    $("sheetTitle").innerHTML = first ? "What do you <em>take home?</em>" : "Settings";
+    $("sheetSub").textContent = first ? "We use it to turn prices into hours. It never leaves your phone, and we'll never bring it up again. Unlike your manager." : "Tweak your hours or pay. Your salary stays hidden.";
+    $("closeSheet").hidden = false;
     $("demoBtn").hidden = !first;
     $("dangerZone").hidden = first;
-    $("saveBtn").textContent = first ? "Punch in" : "Save";
+    $("saveBtn").textContent = first ? "Show my hours" : "Save";
     $("hpd").value = state.hpd; $("dpw").value = state.dpw; $("currency").value = state.currency;
     $("setupErr").textContent=""; $("confirmMsg").textContent=""; $("salary").value="";
     delete $("saveBtn").dataset.confirm;
     syncPay(); syncSeg();
     $("scrim").hidden = false;
-    if(!first) wsTrack("Settings Opened");
+    wsTrack(first ? "Salary Sheet Opened" : "Settings Opened");
     setTimeout(()=> (editingPay ? $("salary") : $("hpd")).focus(), 50);
   }
-  function closeSheet(){ if(!state.pay && !state.demo) return; $("scrim").hidden = true; $("gear").focus(); }
+  function closeSheet(){ $("scrim").hidden = true; $("gear").focus(); }
   function syncPay(){
     $("maskedRow").hidden = editingPay;
     $("salaryLabel").hidden = !editingPay;
@@ -184,24 +199,26 @@
       return;
     }
     const wasOnboarding = !state.pay;
-    Object.assign(state,{ pay, period:draftPeriod, hpd, dpw, currency:cur, demo:false });
-    if(wasOnboarding) wsTrack("Onboarding Completed", { pay_period: draftPeriod, currency: cur });
+    Object.assign(state,{ pay, period:draftPeriod, hpd, dpw, currency:cur });
+    if(wasOnboarding) wsTrack("Onboarding Completed", { pay_period: draftPeriod, currency: cur, checks_before: state.history.filter(x=>!x.ex).length });
     else wsTrack("Settings Saved", { changed_salary: editingPay });
     $("salary").value=""; save();
     $("scrim").hidden = true; render(true);
   };
-  $("demoBtn").onclick=()=>{ wsTrack("Demo Mode Started"); state.demo=true; state.currency=$("currency").value; save(); $("scrim").hidden=true; render(false); };
+  $("demoBtn").onclick=()=>{ wsTrack("Salary Prompt Dismissed", { from: "sheet" }); closeSheet(); };
+  $("nudgeYes").onclick=()=>{ wsTrack("Salary Prompt Accepted"); openSheet(); };
+  $("nudgeNo").onclick=()=>{ wsTrack("Salary Prompt Dismissed", { from: "nudge" }); state.nudgeOff=true; save(); render(false); };
   $("clearHist").onclick=()=>{ wsTrack("History Cleared"); state.history=[]; save(); render(false); $("confirmMsg").textContent="History cleared. Clean slate, same job."; };
   $("forget").onclick=()=>{
     if(!$("forget").dataset.armed){ $("forget").dataset.armed="1"; $("forget").textContent="Tap again to forget"; return; }
     delete $("forget").dataset.armed; $("forget").textContent="Forget my salary";
     wsTrack("Salary Forgotten");
-    state.pay=null; state.demo=false; save(); render(false); openSheet();
+    state.pay=null; state.nudgeOff=true; save(); render(false); closeSheet();
   };
 
   /* ---------- boot ---------- */
-  // Fresh visitors see one example card behind the onboarding sheet.
-  if(!state.history.length && !state.pay && !state.demo){
+  // Fresh visitors see the intro and one example card. Nothing is asked of them yet.
+  if(!state.history.length && !state.pay){
     state.history=[{ name:"iPhone 18", price:99900, cur:"INR", t:Date.now(), seed:1, ex:true }];
   }
   render(false);
@@ -213,10 +230,9 @@
       else if(document.referrer){ const h = new URL(document.referrer).hostname.replace(/^www\./,""); if(h !== location.hostname) source = h; }
     }catch(e){}
     const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-    wsTrack("App Opened", { source, installed_app: standalone, visitor: state.pay ? "set_up" : state.demo ? "demo" : "new" });
+    wsTrack("App Opened", { source, installed_app: standalone, visitor: state.pay ? "set_up" : hasRealChecks() ? "sample_pay" : "new" });
   })();
   window.addEventListener("appinstalled", ()=> wsTrack("App Installed"));
-  if(!state.pay && !state.demo) openSheet();
   setInterval(()=>render(false), 60000);
 })();
 

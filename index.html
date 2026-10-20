@@ -28,7 +28,7 @@
   <div class="col">
     <p class="brand">Worth the <em>shift?</em></p>
     <div class="bar-right">
-      <button class="pill" id="demoPill" type="button" hidden>Demo pay</button>
+      <button class="pill" id="demoPill" type="button" hidden>Set my pay</button>
       <button class="icon-btn" id="gear" type="button" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
@@ -38,6 +38,23 @@
 
 <main class="gutter">
   <div class="col">
+    <!-- first-visit intro: what the app does, before asking for anything -->
+    <section class="intro" id="intro" hidden>
+      <p class="intro-eyebrow">Every price, in hours at your desk</p>
+      <h1 class="intro-title" id="introTitle">₹99,900 = <em>195 hours</em> at your desk.</h1>
+      <p class="intro-sub">Type anything you want to buy. We'll tell you how many office hours it really costs.</p>
+      <p class="intro-try">↓ Tap one below or type your own. No salary needed.</p>
+    </section>
+
+    <!-- after the first check on sample pay: offer personal numbers -->
+    <section class="nudge" id="nudge" hidden>
+      <p class="nudge-text"><b id="nudgeBasis">That's on a ₹1,00,000/month salary.</b> Want it in your own hours?</p>
+      <div class="nudge-actions">
+        <button class="btn" id="nudgeYes" type="button">Use my salary</button>
+        <button class="btn text" id="nudgeNo" type="button">Not now</button>
+      </div>
+    </section>
+
     <!-- empty state -->
     <section class="card" id="emptyHero" hidden>
       <div class="card-head"><span>Timecard · today</span><span>No damage yet</span></div>
@@ -93,10 +110,10 @@
 <div class="scrim" id="scrim" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="sheet-top">
-      <h2 id="sheetTitle">Clock in. <em>Once.</em></h2>
+      <h2 id="sheetTitle">What do you <em>take home?</em></h2>
       <button class="close" id="closeSheet" type="button">Close</button>
     </div>
-    <p class="sub" id="sheetSub">Tell us what you make. We'll hide it and never bring it up again. Unlike your manager.</p>
+    <p class="sub" id="sheetSub">We use it to turn prices into hours. It never leaves your phone, and we'll never bring it up again. Unlike your manager.</p>
 
     <div id="maskedRow" class="row masked-row" hidden>
       <div><div class="mask" aria-label="Salary hidden">••••••</div><p class="hint" id="maskedMeta"></p></div>
@@ -125,8 +142,8 @@
     </label>
     <p class="hint err" id="setupErr" role="alert"></p>
     <div class="actions">
-      <button class="btn" id="saveBtn" type="button">Punch in</button>
-      <button class="btn text" id="demoBtn" type="button">Just looking. Use demo pay.</button>
+      <button class="btn" id="saveBtn" type="button">Show my hours</button>
+      <button class="btn text" id="demoBtn" type="button">Not now</button>
     </div>
     <p class="hint">Your salary stays in this browser and is never shown again. We count anonymous clicks, never amounts or items. Use what lands in your account, not CTC, for the painful truth.</p>
 

@@ -1,4 +1,5 @@
 @font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/bricolage-grotesque-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:800;font-display:swap;src:url("fonts/bricolage-grotesque-latin-ext-800-normal.woff2") format("woff2");unicode-range:U+20B9}
 @font-face{font-family:"Bricolage Grotesque";font-style:normal;font-weight:800;font-display:swap;src:url("fonts/bricolage-grotesque-latin-800-normal.woff2") format("woff2")}
 @font-face{font-family:"Instrument Sans";font-style:normal;font-weight:400;font-display:swap;src:url("fonts/instrument-sans-latin-400-normal.woff2") format("woff2")}
 @font-face{font-family:"Instrument Sans";font-style:normal;font-weight:500;font-display:swap;src:url("fonts/instrument-sans-latin-500-normal.woff2") format("woff2")}
@@ -152,3 +153,18 @@ label{display:flex;flex-direction:column;gap:6px;font:600 12px/1.2 var(--body);c
 .share-btn{font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:transparent;border:1.5px solid var(--ink);border-radius:999px;padding:6px 9px;cursor:pointer}
 .share-btn[aria-pressed="true"]{background:var(--stamp);border-color:var(--stamp);color:#fff}
 .share-note{margin:0;font-size:12px;color:var(--stamp);font-weight:600}
+
+/* first-visit intro */
+.intro{display:flex;flex-direction:column;gap:10px;padding-block:4px 2px}
+.intro-eyebrow{margin:0;font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.intro-title{margin:0;font:800 clamp(36px,10vw,56px)/.98 var(--display);letter-spacing:-.025em;text-wrap:balance}
+.intro-title em{font-style:normal;color:var(--stamp)}
+.intro-sub{margin:0;color:var(--muted);font-size:16px;max-width:40ch}
+.intro-try{margin:4px 0 0;font:700 12px/1.3 var(--mono);letter-spacing:.06em;color:var(--stamp)}
+
+/* sample-pay nudge */
+.nudge{background:var(--stamp-soft);border:1.5px solid var(--stamp);border-radius:4px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.nudge-text{margin:0;font-size:15px;line-height:1.4}
+.nudge-text b{font-weight:700}
+.nudge-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.nudge-actions .btn{padding:11px 16px;font-size:14px}
